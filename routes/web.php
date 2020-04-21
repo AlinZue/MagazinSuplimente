@@ -1,0 +1,88 @@
+<?php
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| contains the "web" middleware group. Now create something great!
+|
+*/
+
+Route::get('/', function () {
+    return view('welcome');
+});
+
+Route::view('contact', 'contact');
+Route::view('about', 'about');
+Route::view('promo', 'promo');
+Route::view('products', 'products');
+Route::get('show', 'ProductsController@show');
+Route::view('categori.bpisports', 'categori.bpisports');
+
+//Auth::routes();
+/**
+ * Login Route(s)
+ */
+Route::get('login', 'Auth\LoginController@showLoginForm')->name('login');
+Route::post('login', 'Auth\LoginController@login');
+Route::post('logout', 'Auth\LoginController@logout')->name('logout');
+/**
+ * Register Route(s)
+ */
+Route::get('register', 'Auth\RegisterController@showRegistrationForm')->name('register');
+Route::post('register', 'Auth\RegisterController@register');
+/**
+ * Password Reset Route(S)
+ */
+Route::get('password/reset', 'Auth\ForgotPasswordController@showLinkRequestForm')->name('password.request');
+Route::post('password/email', 'Auth\ForgotPasswordController@sendResetLinkEmail')->name('password.email');
+Route::get('password/reset/{token}', 'Auth\ResetPasswordController@showResetForm')->name('password.reset');
+Route::post('password/reset', 'Auth\ResetPasswordController@reset')->name('password.update');
+/**
+ * Email Verification Route(s)
+ */
+Route::get('email/verify', 'Auth\VerificationController@show')->name('verification.notice');
+Route::get('email/verify/{id}', 'Auth\VerificationController@verify')->name('verification.verify');
+Route::get('email/resend', 'Auth\VerificationController@resend')->name('verification.resend');
+
+Route::get('/products/listProducts', 'ProductsController@listProducts');
+Route::get('cart', 'ProductsController@cart');
+Route::get('add-to-cart/{id}', 'ProductsController@addToCart');
+Route::patch('update-cart', 'ProductsController@updateCart');
+Route::delete('remove-from-cart', 'ProductsController@removeCart');
+
+Route::view('categoryAccesory', 'categoryAccesory');
+Route::view('categoryAmino', 'categoryAmino');
+Route::view('categoryProteinBars', 'categoryProteinBars');
+Route::view('categoryGainers', 'categoryGainers');
+Route::view('categoryCreatine', 'categoryCreatine');
+Route::view('categoryEnergy', 'categoryEnergy');
+Route::view('categoryGlutamine', 'categoryGlutamine');
+Route::view('categoryProteinSnacks', 'categoryProteinSnacks');
+Route::view('categoryProtein', 'categoryProtein');
+Route::view('categoryJointHealth', 'categoryJointHealth');
+Route::view('categoryWheyLoss', 'categoryWheyLoss');
+Route::view('categoryStimulation', 'categoryStimulation');
+Route::view('categoryVitamins', 'categoryVitamins');
+
+Route::view('brandsBpisports', 'brandsBpisports');
+Route::view('brandsBsn', 'brandsBsn');
+Route::view('brandsCellucor', 'brandsCellucor');
+Route::view('brandsGaspariNutrition', 'brandsGaspariNutrition');
+Route::view('brandsMadmax', 'brandsMadmax');
+Route::view('brandsMuscletech', 'brandsMuscletech');
+Route::view('brandsNutrend', 'brandsNutrend');
+Route::view('brandsOptimumNutrition', 'brandsOptimumNutrition');
+Route::view('brandsQnt', 'brandsQnt');
+Route::view('brandsUniversalNutrition', 'brandsUniversalNutrition');
+
+Route::resource('products', 'ProductsController');
+Route::resource('apiproducts', 'API\ProductAPIController');
+
+Auth::routes();
+
+Route::get('/home', 'HomeController@index')->name('home');
+Route::get('/home', 'ProductsController@listProducts');

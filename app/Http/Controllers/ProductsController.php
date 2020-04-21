@@ -1,0 +1,287 @@
+<?php
+
+namespace App\Http\Controllers;
+use App\Product;
+use Illuminate\Http\Request;
+use File;
+use Illuminate\Support\Facades\Auth;
+
+class ProductsController extends Controller
+{
+
+
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public  function __construct()
+    {
+        /*
+        *$this->middleware('auth')->except(['cart', 'show', 'addToCart']);
+        */
+
+         /*
+         * $this->middleware('auth');  //toate metodele pot fi accesate doar logat
+         */
+
+
+         /*
+         * $this->middleware('auth', ['only' => ['create', 'store', 'edit', 'delete']]);//lista de metode ce pot fi accesate doar logat
+         */
+
+          $this->middleware('auth.admin', ['only' => ['index']]);//lista de metode ce pot fi accesate doar logat
+
+
+          $this->middleware('auth', ['except' => ['cart', 'listProducts', 'cart', 'show', 'addToCart']]); //lista de metode ce pot fi accesate nelogat
+
+        $cart = session()->get('cart');
+        if(!isset($cart)){
+            session()->put('cart', array());
+        }
+    }
+
+    public function index()
+    {
+
+        $products = Product::latest()->paginate(15);
+        return view('products.index',compact('products'))->with('i', (request()->input('page', 1) - 1) * 15);
+    }
+
+    public function cart()
+    {
+        return view('products.cart');
+    }
+
+    public function addToCart($id)
+    {
+        $product = Product::find($id);
+
+        if(!$product) {
+
+            abort(404);
+
+        }
+
+        $cart = session()->get('cart');
+
+        // if cart is empty then this the first product
+        if(!$cart) {
+
+            $cart = [
+                $id => [
+                    "name" => $product->name,
+                    "brand" => $product->brand,
+                    "quantity" => 1,
+                    "price" => $product->price,
+                    "photo" => $product->photo
+                ]
+            ];
+
+            session()->put('cart', $cart);
+
+            return redirect()->back()->with('success', 'Product added to cart successfully!');
+        }
+
+        // if cart not empty then check if this product exist then increment quantity
+        if(isset($cart[$id])) {
+
+            $cart[$id]['quantity']++;
+
+            session()->put('cart', $cart);
+
+            return redirect()->back()->with('success', 'Product added to cart successfully!');
+
+        }
+
+        // if item not exist in cart then add to cart with quantity = 1
+        $cart[$id] = [
+            "name" => $product->name,
+            "brand" => $product->brand,
+            "quantity" => 1,
+            "price" => $product->price,
+            "photo" => $product->photo
+        ];
+
+        session()->put('cart', $cart);
+
+        return redirect()->back()->with('success', 'Product added to cart successfully!');
+    }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function listProducts()
+    {
+        $products = Product::all();
+
+        $cart = session()->get('cart');
+        if(!isset($cart)){
+            session()->put('cart', array());
+        }
+
+
+        return view('products.products', compact('products'));
+
+    }
+
+
+
+    public function updateCart(Request $request)
+    {
+        if($request->id and $request->quantity)
+        {
+            $cart = session()->get('cart');
+
+            $cart[$request->id]["quantity"] = $request->quantity;
+
+            session()->put('cart', $cart);
+
+            session()->flash('success', 'Cart updated successfully');
+        }
+    }
+
+    public function removeCart(Request $request)
+    {
+        if($request->id) {
+
+            $cart = session()->get('cart');
+
+            if(isset($cart[$request->id])) {
+
+                unset($cart[$request->id]);
+
+                session()->put('cart', $cart);
+            }
+
+            session()->flash('success', 'Product removed successfully');
+        }
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {
+        $cart = session()->get('cart');
+        if(!isset($cart)){
+            session()->put('cart', array());
+        }
+        return view('products.create');
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|min:3',
+            'brand' => 'required|min:3',
+            'description' => 'required',
+            'photo' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'price' => 'required|regex:/^\d+(\.\d{1,2})?$/',
+        ]);
+
+        $product = new Product();
+        if ($request->hasFile('photo')) {
+            //$image = $request->file('photo');
+            $imageName = time().'.'.request()->photo->getClientOriginalExtension();
+            request()->photo->move(public_path('images'), $imageName);
+            $product->photo = $imageName;
+        }
+        $product->name = $request->get('name');
+        $product->brand = $request->get('brand');
+        $product->description = $request->get('description');
+        $product->price = $request->get('price');
+
+        $product->save();
+
+
+
+        return redirect()->route('products.index')->with('success','Product added successfully.');
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function show(Product $product)
+    {
+        return view('products.show',compact('product',$product));
+    }
+
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function edit(Product $product)
+    {
+
+        return view('products.edit',compact('product',$product));
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request,$id)
+    {
+        $product=Product::findOrFail($id);
+        $request->validate([
+            'name' => 'required|min:3',
+            'brand' => 'required|min:3',
+            'description' => 'required',
+            'photo' => 'image|mimes:jpeg,png,jpg|max:2048',
+            'price' => 'required|regex:/^\d+(\.\d{1,2})?$/',
+        ]);
+        $product->update($request->all());
+        if ($request->hasFile('photo'))
+        {
+
+            $productImage = public_path("/images/{$product->photo}"); // get previous image from folder
+            if (File::exists($productImage)) { // unlink or remove previous image from folder
+                unlink($productImage);
+            }
+
+
+            $file = $request->file('photo');
+            $imageName = time().'.'.request()->photo->getClientOriginalExtension();
+
+            $product->photo = $imageName;
+            $file->move(public_path('images'), $imageName);
+            $product->save();
+        }
+        return redirect()->route('products.index')->with('success','Product updated successfully.');
+
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy(Request $request, Product $product)
+    {
+        $product->delete();
+        $request->session()->flash('message', 'Successfully deleted the product!');
+        return redirect('products');
+    }
+}
