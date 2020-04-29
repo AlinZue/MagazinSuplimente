@@ -25,7 +25,6 @@
                             <h3>{{ $product->brand }}</h3>
                             </div>
                             <p><strong>Price: </strong> {{ $product->price }}Lei</p>
-                            <p class="btn-holder" style="width: 100px;"><a href="{{ url('show/'.$product->id) }}" class="btn btn-warning btn-block text-center" role="button">Show</a> </p>
                             <p class="btn-holder" style="width: 100px;"><a href="{{ url('add-to-cart/'.$product->id) }}" class="btn btn-success btn-block text-center" role="button">Add to cart</a> </p>
                         </div>
                     </div>
